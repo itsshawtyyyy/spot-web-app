@@ -1,0 +1,209 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: API specification
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: events
+    description: Public event catalogue operations
+paths:
+  /events:
+    get:
+      operationId: listEvents
+      tags: [events]
+      summary: List upcoming events
+      parameters:
+        - in: query
+          name: category
+          schema:
+            $ref: "#/components/schemas/EventCategory"
+      responses:
+        "200":
+          description: Events ordered by start time
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Event"
+    post:
+      operationId: createEvent
+      tags: [events]
+      summary: Create an event
+      security:
+        - AdminToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateEvent"
+      responses:
+        "201":
+          description: Created event
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Event"
+  /events/{id}:
+    get:
+      operationId: getEvent
+      tags: [events]
+      summary: Get one event
+      parameters:
+        - $ref: "#/components/parameters/EventId"
+      responses:
+        "200":
+          description: Event
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Event"
+        "404":
+          description: Event not found
+    patch:
+      operationId: updateEvent
+      tags: [events]
+      summary: Update an event
+      security:
+        - AdminToken: []
+      parameters:
+        - $ref: "#/components/parameters/EventId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateEvent"
+      responses:
+        "200":
+          description: Updated event
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Event"
+        "404":
+          description: Event not found
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+components:
+  securitySchemes:
+    AdminToken:
+      type: apiKey
+      in: header
+      name: x-admin-token
+  parameters:
+    EventId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+    EventCategory:
+      type: string
+      enum: [Party, Concerti, Mostre, Aperitivi]
+    Event:
+      allOf:
+        - $ref: "#/components/schemas/CreateEvent"
+        - type: object
+          required: [id, createdAt, updatedAt]
+          properties:
+            id:
+              type: string
+              format: uuid
+            createdAt:
+              type: string
+              format: date-time
+            updatedAt:
+              type: string
+              format: date-time
+    CreateEvent:
+      type: object
+      required: [title, venue, category, startsAt, description, latitude, longitude]
+      properties:
+        title:
+          type: string
+          minLength: 3
+          maxLength: 70
+        venue:
+          type: string
+          minLength: 2
+          maxLength: 120
+        category:
+          $ref: "#/components/schemas/EventCategory"
+        startsAt:
+          type: string
+          format: date-time
+        imageUrl:
+          type: [string, "null"]
+          format: uri
+        description:
+          type: string
+          minLength: 1
+          maxLength: 1500
+        latitude:
+          type: number
+          minimum: -90
+          maximum: 90
+        longitude:
+          type: number
+          minimum: -180
+          maximum: 180
+    UpdateEvent:
+      type: object
+      minProperties: 1
+      properties:
+        title:
+          type: string
+          minLength: 3
+          maxLength: 70
+        venue:
+          type: string
+          minLength: 2
+          maxLength: 120
+        category:
+          $ref: "#/components/schemas/EventCategory"
+        startsAt:
+          type: string
+          format: date-time
+        imageUrl:
+          type: [string, "null"]
+          format: uri
+        description:
+          type: string
+          minLength: 1
+          maxLength: 1500
+        latitude:
+          type: number
+          minimum: -90
+          maximum: 90
+        longitude:
+          type: number
+          minimum: -180
+          maximum: 180

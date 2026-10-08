@@ -1,0 +1,24 @@
+kind = "mobile"
+previewPath = "/"
+title = "SPOT"
+description = "Scopri eventi locali, visualizzali sulla mappa, salva i tuoi preferiti e crea o gestisci eventi direttamente dal telefono."
+version = "1.0.0"
+id = "artifacts/spot-events"
+router = "expo-domain"
+
+[[services]]
+name = "expo"
+ensurePreviewReachable = "/status"
+paths = [ "/" ]
+localPort = 25903
+
+[services.development]
+run = "pnpm --filter @workspace/spot-events run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/spot-events", "run", "build" ]
+run = [ "pnpm", "--filter", "@workspace/spot-events", "run", "serve" ]
+
+[services.env]
+PORT = "25903"
+BASE_PATH = "/"
