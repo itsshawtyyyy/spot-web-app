@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="SPOT: your personal event planner." />
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <title>SPOT — cosa succede in giro.</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+    <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <style>
+      :root { color-scheme: dark; --bg:#09090b; --surface:#151319; --line:#302b36; --ink:#f8f7f4; --muted:#b7b1bd; --pink:#ec4899; --yellow:#ffd166; --mint:#70e1b5; --violet:#b85cf6; }
+      * { box-sizing:border-box } body { margin:0; background:radial-gradient(circle at 50% -10%,#261230 0,transparent 32%),var(--bg); color:var(--ink); font:15px/1.45 Inter,ui-sans-serif,system-ui,sans-serif; }
+      button,input { font:inherit } button { cursor:pointer } .shell { width:min(100% - 28px,470px); margin:auto; }
+      header { display:flex; align-items:center; justify-content:space-between; padding:25px 0 18px; border-bottom:1px solid var(--line) } .brand { display:flex; align-items:center; gap:10px; font-size:1.25rem; font-weight:900; letter-spacing:.11em } .mark { width:31px; height:31px; border-radius:10px; display:grid; place-items:center; background:var(--pink); color:#15101a; font-size:19px; letter-spacing:0 }
+      .city { color:var(--muted); font-size:.82rem } .hero { display:block; padding:34px 0 24px } .eyebrow { color:var(--violet); font-weight:800; letter-spacing:.13em; font-size:.72rem } h1 { font-family:Georgia,serif;font-size:clamp(2.35rem,10vw,3.2rem); line-height:.94; letter-spacing:-.065em; margin:10px 0 13px; max-width:360px } .hero p { color:var(--muted); max-width:370px; margin:0; font-size:.94rem } .counter { background:linear-gradient(135deg,#231828,#17151b); border:1px solid #413044; border-radius:20px; padding:20px; min-height:0; display:flex; flex-direction:column; justify-content:end; } .hero .counter{display:none}.counter strong { font-size:4.3rem; line-height:1; color:var(--pink); letter-spacing:-.08em } .counter span { color:var(--muted); margin-top:8px }
+      .tools { display:flex; flex-wrap:wrap; gap:11px; align-items:center; padding:24px 0; border-top:1px solid var(--line); border-bottom:1px solid var(--line) } .search { min-width:min(100%,300px); flex:1; background:var(--surface); border:1px solid var(--line); color:var(--ink); padding:12px 14px; border-radius:12px; outline:none } .search:focus { border-color:var(--pink) } .coordinates{display:grid;grid-template-columns:1fr 1fr;gap:10px}.coordinates .search,#event-form>div[style] .search{min-width:0;width:100%}#event-form>div[style]{display:grid!important;grid-template-columns:1fr 1fr;gap:10px!important}.filter { border:1px solid var(--line); background:transparent; color:var(--muted); border-radius:999px; padding:9px 14px } .filter.active,.filter:hover { border-color:var(--pink); background:var(--pink); color:#170c18 }
+      main { padding:23px 0 65px } .section-head { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:13px } h2 { margin:0;font-family:Georgia,serif;font-size:1.5rem; letter-spacing:-.045em } .results { color:var(--muted); font-size:.8rem }.grid { display:grid; grid-template-columns:repeat(2,1fr); gap:10px } .card { overflow:hidden; background:var(--surface); border:1px solid var(--line); border-radius:14px; transition:transform .2s,border-color .2s; } .card:first-child{grid-column:span 2}.card:hover { transform:translateY(-3px); border-color:#9352bf } .card button { border:0; color:inherit; background:none; padding:0; text-align:left; width:100% }.image { height:128px; position:relative; background-size:cover; background-position:center }.card:first-child .image{height:235px}.badge { position:absolute; top:10px; left:10px; background:#0d0b0fdd; padding:4px 8px; border-radius:8px; font-size:.68rem; font-weight:800; letter-spacing:.05em } .body { padding:11px 12px 13px }.when { color:#cf8cff; font-size:.74rem; font-weight:750 }.card h3 { margin:5px 0 4px; font-size:1rem; line-height:1.1; letter-spacing:-.035em }.card:first-child h3{font-size:1.42rem}.where { color:var(--muted); font-size:.78rem }.empty { display:none; padding:46px; border:1px dashed var(--line); border-radius:17px; text-align:center; color:var(--muted) }
+      footer { border-top:1px solid var(--line); padding:22px 0 105px; color:var(--muted); font-size:.88rem; display:flex; justify-content:space-between }.tabbar{position:fixed;z-index:8;bottom:18px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:5px;padding:7px;background:rgba(28,25,32,.72);border:1px solid rgba(255,255,255,.16);border-radius:25px;backdrop-filter:blur(18px) saturate(150%);box-shadow:0 12px 40px #0009}.tab{border:0;background:transparent;color:var(--muted);min-width:62px;height:48px;border-radius:18px;font-size:.73rem;font-weight:700}.tab:hover,.tab.active{color:var(--ink);background:rgba(255,255,255,.1)}.tab-add{width:53px;height:53px;margin:-19px 2px 0;border:4px solid var(--bg);border-radius:20px;background:var(--pink);color:#180d19;font-size:1.55rem;font-weight:400;box-shadow:0 7px 20px #ff4fc866}.modal { position:fixed; inset:0; padding:20px; display:none; align-items:end; justify-content:center; background:#0009; z-index:9 }.modal.open { display:flex }.sheet { position:relative; width:min(620px,100%); max-height:90vh; overflow:auto; border:1px solid #443248; background:#17141b; border-radius:22px 22px 15px 15px; padding:30px; box-shadow:0 -18px 60px #0008 }.close { position:absolute; z-index:3; right:15px; top:15px; border:0; background:#29242d; color:var(--ink); width:36px; height:36px; border-radius:50%; font-size:1.25rem }.sheet .label { color:var(--pink); font-weight:800; font-size:.8rem; letter-spacing:.1em }.sheet h3 { font-size:2rem; margin:7px 40px 12px 0; letter-spacing:-.06em; line-height:1 }.sheet p { color:var(--muted); margin-bottom:0 } .meta { display:flex; flex-wrap:wrap; gap:9px; margin-top:20px }.meta span { padding:7px 9px; background:#27222b; border-radius:9px; font-size:.87rem }.event-detail-image{height:205px;margin:-30px -30px 22px;border-radius:21px 21px 15px 15px;background-size:cover;background-position:center}.event-map-link{color:#f7f4f8;text-decoration:none}.event-social{margin-top:22px;padding-top:17px;border-top:1px solid var(--line)}.event-social h4{font-family:Georgia,serif;font-size:1.1rem;margin:17px 0 8px}.emoji-row{display:flex;flex-wrap:wrap;gap:7px}.emoji-row button{border:1px solid var(--line);border-radius:999px;background:#27222b;color:var(--ink);padding:6px 10px}.emoji-row button:hover{border-color:var(--violet)}.emoji-row input{width:58px;min-width:0;text-align:center;padding:5px}.comment-item{padding:10px 0;border-bottom:1px solid var(--line);color:var(--muted);font-size:.9rem}.comment-form{display:grid;grid-template-columns:1fr auto;gap:8px;margin-top:12px}.comment-form textarea{min-width:0;min-height:44px;padding:10px;resize:vertical}.login-note{color:var(--muted);font-size:.9rem}.map-view{display:none;margin:20px 0 42px;height:330px;padding:24px;border-radius:20px;background:radial-gradient(circle at 20% 70%,#ff4fc833 0 4%,transparent 5%),radial-gradient(circle at 70% 35%,#ffd16644 0 4%,transparent 5%),linear-gradient(135deg,#26222b,#141217);border:1px solid var(--line)}.map-view.show{display:block}
+      body.profile-mode .hero,body.profile-mode .tools{display:none}body.profile-mode main{padding-top:34px}.profile-page{display:none;margin-top:0}.profile-page.show{display:block}.profile-intro{text-align:center;margin:0 0 30px}.avatar-picker{position:relative;display:grid;place-items:center;width:118px;height:118px;margin:0 auto 14px;border-radius:50%;overflow:hidden;background:linear-gradient(135deg,#b85cf6,#ec4899);border:3px solid #d99bff;cursor:pointer;box-shadow:0 10px 32px #b85cf655}.avatar-picker::before{content:attr(data-initials);position:absolute;inset:0;display:grid;place-items:center;color:white;font:700 2.4rem/1 Georgia,serif}.avatar-picker img{position:absolute;inset:0;z-index:1;width:100%;height:100%;object-fit:cover;background:#201828}.avatar-picker span{position:absolute;z-index:3;inset:auto 0 0;padding:8px 3px 7px;background:#09090bca;font-size:.72rem;font-weight:700;pointer-events:none}.avatar-picker input{position:absolute;z-index:4;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:pointer}.profile-email{display:block;color:var(--muted);font-size:.84rem;margin-top:3px}.profile-list{display:grid;gap:10px;margin:14px 0 28px}.profile-item{padding:15px;border:1px solid var(--line);border-radius:14px;background:var(--surface)}.profile-item b{display:block;margin-bottom:4px}.profile-item small{color:var(--muted)}.reaction-tools{display:flex;gap:7px;flex-wrap:wrap;margin-top:20px}.reaction-tools button{padding:7px 10px;border-radius:10px;border:1px solid var(--line);background:#27222b;color:var(--ink)}.comment-form{display:grid;gap:8px;margin-top:14px}.comment-form textarea{min-height:70px}
+      @media (max-width:760px){ .shell{width:min(100% - 28px,600px)} header{padding-top:16px}.city{display:none}.hero{grid-template-columns:1fr;gap:23px;padding:52px 0 28px}.counter{min-height:120px}.counter strong{font-size:3.4rem}.grid{grid-template-columns:1fr}.image{height:220px}.tools{gap:8px}.filter{padding:8px 11px}.section-head{align-items:flex-start;gap:8px;flex-direction:column}footer{flex-direction:column;gap:4px} }
+      /* Shared geometry across mobile and desktop. */
+      #profile-page,#submit{scroll-margin-top:24px}
+      .shell{width:calc(100% - 32px);max-width:600px}
+      button,input,select,textarea{font:inherit}input,select,textarea{max-width:100%}
+      .search{min-width:0;width:100%}.tools #search{flex:0 0 100%}
+      header{gap:12px}.brand{flex-shrink:0}#account{max-width:50%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+      .grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.card{min-width:0}.card button{height:100%;display:flex;flex-direction:column}.card .image{width:100%;height:150px}.card:first-child .image{height:240px}.card .body{width:100%}.card h3,.where,.comment-item,.profile-item,.profile-email{overflow-wrap:anywhere}
+      .section-head{flex-direction:row;align-items:baseline;gap:12px;flex-wrap:wrap}.section-head .results{white-space:nowrap}
+      #event-form{min-width:0}#event-form>div[style]{grid-template-columns:repeat(2,minmax(0,1fr))}#event-form textarea{resize:vertical;min-height:100px}
+      #profile-form{display:grid!important;grid-template-columns:minmax(0,1fr) auto;align-items:center}.profile-intro{max-width:100%}.profile-list>p{padding:16px;border:1px solid var(--line);border-radius:14px;margin:0}
+      .tabbar{width:min(400px,calc(100% - 24px));display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:0;bottom:calc(12px + env(safe-area-inset-bottom));border-radius:30px}.tab{min-width:0;width:100%;height:52px}.tab[data-tab=home]{grid-column:1}.tab[data-tab=map]{grid-column:2}.tab-add{grid-column:3;justify-self:center;width:52px;height:52px;margin:0;border:0;border-radius:50%}.tab[data-tab=profile]{grid-column:4 / 6}
+      .modal{padding:16px;align-items:center}.sheet{width:min(600px,100%);padding:24px;max-height:calc(100dvh - 32px);border-radius:22px;overscroll-behavior:contain}.event-detail-image{margin:-24px -24px 20px;border-radius:21px 21px 0 0}.meta{align-items:center}.event-map-link{padding:7px 9px;background:#27222b;border-radius:9px;overflow-wrap:anywhere}.sheet h3{line-height:1.15}
+      #auth-form{display:grid;gap:12px}#signup,#google{width:100%}.emoji-row{align-items:center}.emoji-row button{min-height:44px}.emoji-row input{flex:0 0 58px;height:44px}.comment-form{grid-template-columns:minmax(0,1fr) auto;align-items:end}.comment-form button{min-height:44px}.sheet p,.sheet h3{overflow-wrap:anywhere}
+      button:focus-visible,a:focus-visible,.avatar-picker:focus-within{outline:2px solid var(--violet);outline-offset:3px}body:has(.modal.open){overflow:hidden}footer{padding-bottom:calc(112px + env(safe-area-inset-bottom))}
+      @media(max-width:380px){#profile-form,.comment-form{grid-template-columns:minmax(0,1fr)}.sheet{padding:18px}.event-detail-image{margin:-18px -18px 18px}.card .image{height:120px}.card:first-child .image{height:200px}.filter{padding:8px 10px}}
+      body.map-mode .hero,body.map-mode .tools,body.map-mode #home-content{display:none!important}
+      #map-view{height:auto;padding:0;background:none;border:none;margin:0 0 24px;scroll-margin-top:20px}
+      #event-map{height:clamp(300px,55dvh,500px);border-radius:18px;border:1px solid var(--line);isolation:isolate;z-index:0;background:#23232a}
+      .map-toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px}
+      #map-status,#map-tile-message{font-size:.85rem;color:var(--muted)}#map-tile-message:empty{display:none}
+      .spot-marker span{width:36px;height:36px;display:grid;place-items:center;border:3px solid white;border-radius:50%;background:#a63deb;color:white;box-shadow:0 3px 14px #0007;font-weight:bold}
+      .map-popup{color:#24202b;max-height:240px;overflow:auto}.map-popup strong{display:block;font-size:16px}.map-popup p{margin:8px 0!important}
+      .map-popup .filter{color:#7424a6}.map-directions{display:block;color:#bc83f3;margin-top:10px}.map-popup .map-directions{color:#7424a6}
+      .map-popup-event+.map-popup-event{border-top:1px solid #ccc;margin-top:12px;padding-top:12px}
+      .map-event-link{border:0;background:none;color:var(--ink);padding:0;text-align:left;font-weight:700;cursor:pointer}.map-event-link:hover{text-decoration:underline}
+      #map-events p{margin:6px 0;color:var(--muted);font-size:.85rem}
+      header{display:grid;grid-template-columns:minmax(0,1fr) 132px minmax(0,1fr);align-items:center;gap:12px;padding:16px 0}
+      header .brand{grid-column:2;grid-row:1;position:relative;width:132px;height:64px;overflow:hidden;display:block}
+      header .brand img{position:absolute;width:180px;height:180px;max-width:none;left:50%;top:50%;transform:translate(-50%,-51%);object-fit:contain}
+      header .city{grid-column:1;grid-row:1;font-size:.78rem}
+      header #account{grid-column:3;grid-row:1;justify-self:end;max-width:100%}
+      body.profile-mode header,body.map-mode header,body.add-mode header{grid-template-columns:132px minmax(0,1fr)}
+      body.profile-mode header .brand,body.map-mode header .brand,body.add-mode header .brand{grid-column:1}
+      body.profile-mode header .city,body.map-mode header .city,body.add-mode header .city{display:none}
+      body.profile-mode header #account,body.map-mode header #account,body.add-mode header #account{grid-column:2}
+      @media(max-width:480px){body:not(.profile-mode):not(.map-mode):not(.add-mode) header #account{grid-row:2;grid-column:1 / -1;max-width:100%}header .city{display:none}}
+      .emoji-row button[aria-pressed="true"]{background:#7134a0;border-color:#d99bff;box-shadow:0 0 0 1px #d99bff}.emoji-row button:disabled{opacity:.6;cursor:wait}
+      #event-form label{display:grid;gap:7px;min-width:0}#event-form small{color:var(--muted);font-size:.8rem}
+      #event-photo-preview{width:100%;max-height:240px;object-fit:cover;border-radius:14px}
+      #venue-picker{height:280px;border-radius:14px;isolation:isolate;z-index:0}
+      .venue-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}.venue-choice{min-width:0}
+      #venue-position{font-size:.85rem;color:var(--muted)}#description-counter{text-align:right}
+    .tabbar{border-radius:999px;padding:9px;background:rgba(35,31,42,.68);box-shadow:inset 0 1px 0 #ffffff24,0 12px 40px #0008;backdrop-filter:blur(26px) saturate(170%)}.tab{border-radius:999px}.tab[data-tab=profile]{max-width:90px;justify-self:center}.lgbt-tag{display:inline-block;border:1px solid #c680ef;background:#30203f;color:#f5dcff;border-radius:999px;padding:4px 9px;font-size:.75rem}.image .lgbt-tag{position:absolute;right:10px;bottom:10px}.event-tag-option{display:flex;align-items:center;gap:10px;padding:12px;border:1px solid var(--line);border-radius:16px}.event-tag-option input{width:20px;height:20px;accent-color:var(--violet)}#account.account-avatar{width:44px;height:44px;min-width:44px;padding:0;border-radius:50%;display:grid;place-items:center;overflow:hidden;background:#29212f}#account.account-avatar img{width:100%;height:100%;object-fit:cover}#account.account-avatar svg{width:25px;height:25px}@media(max-width:480px){body:not(.profile-mode):not(.map-mode):not(.add-mode) header #account.account-avatar{grid-row:1;grid-column:3}}
+</style>
+  </head>
+  <body>
+    <div class="shell">
+      <header><div class="brand" aria-label="SPOT"><img src="assets/spot-logo.png" alt="SPOT" width="654" height="654" fetchpriority="high"></div><div class="city">Roma, Italia</div><button id="account" class="filter">Accedi</button></header>
+      <section class="hero"><div><div class="eyebrow">NUOVI EVENTI</div><h1>Hey,<br>trova la tua prossima serata.</h1><p>Tutti gli eventi da scoprire nella tua città.</p></div><div class="counter"><strong id="count">9</strong><span>idee per uscire nei prossimi giorni</span></div></section>
+      <nav class="tools" aria-label="Filtra gli eventi"><input id="search" class="search" type="search" placeholder="Cerca per evento o luogo" aria-label="Cerca eventi"><button class="filter active" data-filter="Tutti">Tutti</button><button class="filter" data-filter="DJ SET">DJ SET</button><button class="filter" data-filter="Techno">Techno</button><button class="filter" data-filter="Live/Mostre Art">Live/Mostre Art</button><button class="filter" data-filter="Aperitivi">Aperitivi</button><button class="filter" data-filter="LGBT+">LGBT+</button></nav>
+      <main><section id="map-view" class="map-view" aria-label="Mappa eventi"><div class="map-toolbar"><h2>Eventi sulla mappa</h2><button id="map-refresh" class="filter" type="button">Aggiorna</button></div><p id="map-status" role="status"></p><div id="event-map" aria-label="Posizioni degli eventi"></div><p id="map-tile-message" role="status"></p><div id="map-events" class="profile-list"></div></section><section id="profile-page" class="profile-page"><div class="profile-intro"><label class="avatar-picker" title="Cambia foto profilo"><img id="profile-avatar" alt="Foto profilo"><span>Modifica foto</span><input id="avatar-file" type="file" accept="image/png,image/jpeg,image/webp"></label><h2 id="profile-heading">Il tuo profilo</h2><span id="profile-email" class="profile-email"></span></div><form id="profile-form" style="display:flex;gap:10px;flex-wrap:wrap"><input id="profile-name" class="search" maxlength="80" placeholder="Come vuoi comparire su SPOT" required><button class="filter active" type="submit">Salva profilo</button></form><p id="profile-message" role="status"></p><button id="logout" type="button" class="filter">Esci dall’account</button><div class="section-head" style="margin-top:34px"><h2>Eventi a cui hai reagito</h2></div><div id="reaction-events" class="profile-list"><p class="results">Ancora nessuna reazione.</p></div><div class="section-head"><h2>Eventi che hai commentato</h2></div><div id="comment-events" class="profile-list"><p class="results">Ancora niente qui.</p></div><section aria-label="Le mie proposte"><h2>Le mie proposte</h2><div id="my-proposals" class="profile-list" aria-live="polite"></div></section><section id="admin-panel" class="profile-list" style="display:none;margin-top:34px"><div class="section-head"><h2>DA APPROVARE</h2></div><div id="pending-events"></div></section></section><div id="home-content"><div class="section-head"><h2>Da non perdere</h2><span id="results" class="results">Trova quello che fa per te.</span></div><section id="grid" class="grid" aria-live="polite"></section><div id="empty" class="empty">Nessun evento corrisponde alla ricerca.</div><section id="submit" class="counter" style="margin-top:42px;min-height:0"><h2>Consiglia un evento!</h2><p id="submit-help">Accedi per creare il tuo profilo e consigliare un evento all’amministratore.</p><form id="event-form" style="display:none;gap:12px;margin-top:18px">
+<label>Titolo dell’evento<input name="title" class="search" placeholder="Come si chiama l’evento?" maxlength="160" required></label>
+<label>Foto dell’evento<input name="photo" type="file" class="search" accept="image/jpeg,image/png,image/webp" required><small>JPG o PNG, massimo 5 MB. Scegli una foto destinata alla pubblicazione.</small></label>
+<img id="event-photo-preview" alt="Anteprima foto evento" hidden>
+<label>Nome del luogo e indirizzo<input name="venue" class="search" placeholder="Locale, via e città" maxlength="240" required></label>
+<div class="venue-choice"><p id="venue-position" role="status">Tocca il punto esatto del luogo sulla mappa.</p><div id="venue-picker" aria-label="Scegli il luogo dell’evento"></div><div class="venue-actions"><button type="button" id="use-map-center" class="filter">Usa il centro della mappa</button><button type="button" id="reload-venue-map" class="filter">Ricarica mappa</button></div></div>
+<input name="latitude" type="hidden"><input name="longitude" type="hidden">
+<label class="event-tag-option"><input type="checkbox" name="is_lgbt">Evento LGBT+</label>
+<label>Categoria<select name="category" class="search"><option>DJ SET</option><option>Techno</option><option>Live/Mostre Art</option><option>Aperitivi</option></select></label>
+<label>Giorno e orario<input name="starts_at" class="search" type="datetime-local" required></label>
+<label>Descrizione<textarea name="description" class="search" placeholder="Racconta l’evento in massimo 150 caratteri" maxlength="150" aria-describedby="description-counter" required></textarea></label>
+<small id="description-counter" aria-live="polite">0/150 caratteri</small>
+<button class="filter active" type="submit">Invia per approvazione</button>
+</form><p id="event-message"></p></section></div></main>
+      <footer><span>SPOT - Your next party starts here.</span><span>An idea by @shawtyyyy</span></footer>
+    </div>
+    <div id="modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title"><article class="sheet"><button id="close" class="close" aria-label="Chiudi">×</button><div id="modal-content"></div></article></div>
+    <div id="auth-modal" class="modal"><article class="sheet"><button id="auth-close" class="close">×</button><div class="label">IL TUO PROFILO SPOT</div><h3>Entra in SPOT</h3><form id="auth-form"><input id="email" class="search" type="email" placeholder="Email" required><input id="password" class="search" type="password" placeholder="Password (almeno 6 caratteri)" required minlength="6"><button class="filter active" type="submit">Accedi</button></form><button id="signup" class="filter" style="margin-top:10px">Crea un account</button><button id="google" class="filter" style="margin-top:10px">Continua con Google</button><button id="forgot-password" type="button" class="filter" style="margin-top:12px;width:100%">Password dimenticata?</button><p id="auth-message" role="status"></p></article></div>
+    <nav class="tabbar" aria-label="Navigazione"><button class="tab active" data-tab="home">⌂<br>Home</button><button class="tab" data-tab="map">⌖<br>Mappa</button><button class="tab-add" data-tab="add" aria-label="Aggiungi evento">+</button><button class="tab" data-tab="profile">◉<br>Profilo</button></nav>
+<script type="module">
+      import { setupModeration } from './event-moderation.js';
+      import { setupAccountActions } from './account-actions.js';
+      import { setupEventCreation } from './event-create.js';
+      import { mountReactions } from './event-reactions.js';
+      import { createEventsStore } from './events-data.js';
+      import { createEventHome } from './event-home.js';
+      import { createEventMap } from './event-map.js';
+      import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+      const supabase=createClient('https://ccgayomcxvocselfdkxm.supabase.co','sb_publishable_mifCbogflWt_ETReczVtIA_q9ekRxJE');
+      setupAccountActions(supabase);
+      const eventsStore = createEventsStore(supabase);
+      const eventMap = createEventMap(eventsStore);
+      const eventHome = createEventHome(eventsStore,eventMap.openDetail);
+      const moderation=setupModeration(supabase,()=>eventHome.refresh());
+      eventHome.refresh();
+      const account=document.querySelector('#account'),authModal=document.querySelector('#auth-modal'),authMessage=document.querySelector('#auth-message'),eventForm=document.querySelector('#event-form'),submitHelp=document.querySelector('#submit-help'),eventMessage=document.querySelector('#event-message');
+      let profile=null;
+      setupEventCreation(supabase,()=>profile);
+      async function renderEventSocial(event){
+        const social=document.querySelector('#event-social');if(!social)return;
+        const [reactionResult,commentResult,{data:{user}}]=await Promise.all([
+          supabase.from('event_reactions').select('emoji,user_id').eq('event_id',event.id),
+          supabase.from('event_comments').select('body,created_at').eq('event_id',event.id).order('created_at',{ascending:false}),
+          supabase.auth.getUser()
+        ]);
+        if(!social.isConnected)return;
+        const reactions=reactionResult.data||[],comments=commentResult.data||[];
+        if(reactionResult.error||commentResult.error){social.replaceChildren();const message=document.createElement('p');message.textContent='Non riesco a caricare reazioni e commenti.';const retry=document.createElement('button');retry.className='filter';retry.textContent='Riprova';retry.onclick=()=>renderEventSocial(event);social.append(message,retry);return;}
+        const commentsHtml=comments.length?comments.map(item=>'<div class="comment-item">'+clean(item.body)+'</div>').join(''):'<p class="login-note">Ancora nessun commento.</p>';
+        social.innerHTML='<h4>Reazioni</h4><div class="emoji-row"></div><h4>Commenti</h4><div id="event-comments">'+commentsHtml+'</div>'+(user?'<form id="comment-form" class="comment-form"><textarea class="search" name="body" maxlength="500" placeholder="Scrivi un commento…" required></textarea><button class="filter active" type="submit">Invia</button></form>':'<p class="login-note">Accedi per lasciare una reazione o un commento.</p>');
+        mountReactions(social.querySelector('.emoji-row'),supabase,event.id,reactions||[],user,()=>authModal.classList.add('open'));
+        const commentForm=social.querySelector('#comment-form');if(commentForm)commentForm.onsubmit=e=>addComment(e,event);
+      }
+      async function addComment(eventSubmit,event){
+        eventSubmit.preventDefault();
+        const form=eventSubmit.currentTarget;
+        if(form.dataset.sending==='true')return;
+        const field=form.querySelector('[name="body"]'),button=form.querySelector('[type="submit"]');
+        const body=field.value.trim();
+        let message=form.querySelector('[role="status"]');
+        if(!message){message=document.createElement('p');message.setAttribute('role','status');message.style.gridColumn='1 / -1';form.append(message);}
+        if(!body||body.length>500){message.textContent='Scrivi un commento da 1 a 500 caratteri.';return;}
+        form.dataset.sending='true';button.disabled=true;field.disabled=true;
+        button.textContent='Invio…';message.textContent='';
+        try{
+          const {data:{user},error:authError}=await supabase.auth.getUser();
+          if(authError||!user){message.textContent='Accedi di nuovo per pubblicare. Il testo è stato conservato.';authModal.classList.add('open');return;}
+          const {error}=await supabase.from('event_comments').insert({event_id:event.id,user_id:user.id,body});
+          if(error)throw error;
+          field.value='';
+          message.textContent='Commento pubblicato.';
+          // Update only this event's existing form, even if another event was opened meanwhile.
+          const comments=form.parentElement.querySelector('#event-comments');
+          if(comments){
+            comments.querySelector('.login-note')?.remove();
+            const item=document.createElement('div');item.className='comment-item';item.textContent=body;
+            comments.prepend(item);
+          }
+        }catch(error){
+          message.textContent='Non è stato possibile inviare il commento. Il testo è stato conservato: riprova.';
+        }finally{
+          form.dataset.sending='false';button.disabled=false;field.disabled=false;button.textContent='Invia';
+        }
+      }
+      window.addEventListener('spot:event-open',event=>renderEventSocial(event.detail));
+      async function syncProfile(user){
+        const value={user_id:user.id,email:user.email,display_name:user.user_metadata?.full_name||user.user_metadata?.name||user.email};
+        const created=await supabase.from('profiles').upsert(value,{onConflict:'user_id',ignoreDuplicates:true});if(created.error)throw created.error;
+        const {data,error}=await supabase.from('profiles').select('*').eq('user_id',user.id).single();if(error||!data)throw error||new Error('Profilo non disponibile');
+        profile=data;await loadAvatar();eventForm.style.display='grid';submitHelp.textContent='Il tuo evento sarà visibile solo dopo l’approvazione.';
+      }
+      async function refresh(){try{const {data:{user},error}=await supabase.auth.getUser();if(error&&!user)return;if(user)await syncProfile(user);}catch{profile=null;eventForm.style.display='none';submitHelp.textContent='Non riesco a caricare il profilo. Riprova ad accedere.';authMessage.textContent='Accesso al profilo non riuscito. Riprova.';}}
+
+      function clean(value){return String(value||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));}
+      async function loadAvatar(){
+        const avatar=document.querySelector('#profile-avatar'),picker=document.querySelector('.avatar-picker');
+        picker.dataset.initials=(profile?.display_name||'SP').trim().split(/\s+/).slice(0,2).map(word=>word[0]).join('').toUpperCase();
+        avatar.removeAttribute('src');avatar.style.display='none';
+        account.classList.add('account-avatar');account.setAttribute('aria-label','Apri il tuo profilo');account.title='Il tuo profilo';
+        const fallback=()=>{account.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2"/></svg>';};fallback();
+        if(!profile?.avatar_url)return;
+        const {data}=await supabase.storage.from('profile-avatars').createSignedUrl(profile.avatar_url,3600);
+        if(data?.signedUrl){avatar.src=data.signedUrl;avatar.style.display='block';avatar.onerror=()=>{avatar.style.display='none';};const photo=document.createElement('img');photo.alt='';photo.src=data.signedUrl;photo.onerror=fallback;account.replaceChildren(photo);}
+      }
+      async function openProfile(){const {data:{user}}=await supabase.auth.getUser();if(!user||!profile){authModal.classList.add('open');return;}document.body.classList.remove('map-mode','add-mode');document.querySelectorAll('[data-tab]').forEach(x=>x.classList.toggle('active',x.dataset.tab==='profile'));document.body.classList.add('profile-mode');document.querySelector('#profile-page').classList.add('show');document.querySelector('#home-content').style.display='none';document.querySelector('#map-view').classList.remove('show');document.querySelector('#profile-name').value=profile.display_name||'';document.querySelector('#profile-heading').textContent=profile.display_name||'Il tuo profilo';document.querySelector('#profile-email').textContent=user.email;await loadAvatar();const [reactionResult,commentResult]=await Promise.all([supabase.from('event_reactions').select('emoji,events(title,venue,category)').eq('user_id',user.id).order('created_at',{ascending:false}),supabase.from('event_comments').select('body,events(title,venue,category)').eq('user_id',user.id).order('created_at',{ascending:false})]);const eventRow=(item,text)=>'<article class="profile-item"><b>'+clean(item.events?.title||'Evento non più disponibile')+'</b><small>'+clean(item.events?.venue||'')+' · '+clean(text)+'</small></article>';if(reactionResult.error||commentResult.error)document.querySelector('#profile-message').textContent='Alcune attività non sono disponibili. Riapri il profilo per riprovare.';const reactions=reactionResult.data||[],comments=commentResult.data||[];document.querySelector('#reaction-events').innerHTML=reactions.length?reactions.map(item=>eventRow(item,'La tua reazione: '+item.emoji)).join(''):'<p class="results">Ancora nessuna reazione.</p>';document.querySelector('#comment-events').innerHTML=comments.length?comments.map(item=>eventRow(item,'Il tuo commento: “'+item.body+'”')).join(''):'<p class="results">Ancora nessun commento.</p>';await moderation.load(profile);document.querySelector('#profile-page').scrollIntoView({behavior:'smooth'});}
+      function openHome(){document.body.classList.remove('add-mode');document.body.classList.remove('map-mode');document.querySelector('#map-view').classList.remove('show');document.body.classList.remove('profile-mode');document.querySelector('#profile-page').classList.remove('show');document.querySelector('#home-content').style.display='block';}
+      account.onclick=()=>profile?openProfile():authModal.classList.add('open');document.querySelector('#auth-close').onclick=()=>authModal.classList.remove('open');
+      document.querySelector('#auth-form').onsubmit=async e=>{e.preventDefault();const email=document.querySelector('#email').value,password=document.querySelector('#password').value;const {error}=await supabase.auth.signInWithPassword({email,password});authMessage.textContent=error?.message||'Accesso effettuato.';if(!error){authModal.classList.remove('open');refresh()}};
+      document.querySelector('#signup').onclick=async()=>{const email=document.querySelector('#email').value,password=document.querySelector('#password').value;const {error}=await supabase.auth.signUp({email,password,options:{emailRedirectTo:location.origin+location.pathname}});authMessage.textContent=error?.message||'Controlla la tua email per confermare l’account.'};
+      document.querySelector('#google').onclick=async()=>{const {error}=await supabase.auth.signInWithOAuth({provider:'google',options:{redirectTo:location.origin+location.pathname}});if(error)authMessage.textContent='Accesso Google non disponibile. Riprova.';};
+      document.querySelector('#profile-form').onsubmit=async e=>{e.preventDefault();if(!profile)return;const display_name=document.querySelector('#profile-name').value.trim();if(!display_name){document.querySelector('#profile-message').textContent='Inserisci un nome.';return;}const {data,error}=await supabase.from('profiles').update({display_name}).eq('id',profile.id).select().single();document.querySelector('#profile-message').textContent=error?.message||'Profilo aggiornato.';if(!error){profile=data;document.querySelector('#profile-heading').textContent=data.display_name;await loadAvatar();}};
+      document.querySelector('#avatar-file').onchange=async e=>{const file=e.target.files?.[0];if(!file||!profile)return;if(file.size>5*1024*1024){document.querySelector('#profile-message').textContent='Scegli una foto più piccola di 5 MB.';return;}const {data:{user}}=await supabase.auth.getUser();if(!user)return;const extension=({'image/jpeg':'jpg','image/png':'png','image/webp':'webp'})[file.type];if(!extension){document.querySelector('#profile-message').textContent='Scegli una foto JPG, PNG o WebP.';return;}const path=user.id+'/avatar.'+extension;document.querySelector('#profile-message').textContent='Caricamento foto…';const {error:uploadError}=await supabase.storage.from('profile-avatars').upload(path,file,{upsert:true,contentType:file.type});if(uploadError){document.querySelector('#profile-message').textContent=uploadError.message;return;}const {data,error}=await supabase.from('profiles').update({avatar_url:path}).eq('id',profile.id).select().single();document.querySelector('#profile-message').textContent=error?.message||'Foto profilo aggiornata.';if(!error){profile=data;await loadAvatar();}};
+      refresh();
+      document.querySelectorAll('[data-tab]').forEach(button=>button.onclick=()=>{const tab=button.dataset.tab;document.querySelectorAll('[data-tab]').forEach(x=>x.classList.toggle('active',x===button));if(tab==='add'){if(!profile){authModal.classList.add('open');return;}openHome();document.body.classList.add('add-mode');document.querySelector('#submit').scrollIntoView({behavior:'smooth'});}else if(tab==='profile')openProfile();else if(tab==='map'){openHome();document.body.classList.add('map-mode');document.querySelector('#map-view').classList.add('show');eventMap.show();window.scrollTo({top:0,behavior:'smooth'});}else{openHome();eventHome.refresh();document.querySelector('#map-view').classList.remove('show');window.scrollTo({top:0,behavior:'smooth'});}});
+    </script>
+  </body>
+</html>

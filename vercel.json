@@ -1,0 +1,6 @@
+{
+  "version": 2,
+  "installCommand": "echo 'No dependencies required for static deployment'",
+  "buildCommand": "node spot-site/scripts/verify-deployment.mjs",
+  "outputDirectory": "spot-site/dist"
+}

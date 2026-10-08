@@ -2,6 +2,8 @@
 
 # compiled output
 dist
+!spot-site/dist/
+!spot-site/dist/**
 tmp
 out-tsc
 *.tsbuildinfo
